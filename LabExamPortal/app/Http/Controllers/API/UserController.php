@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request; 
 use App\Http\Controllers\Controller; 
 use App\User; 
+use App\student_detail;
+use App\admin_detail;
 use Illuminate\Support\Facades\Auth; 
 use Validator;
 
@@ -36,10 +38,37 @@ public $successStatus = 200;
                 'isLogin' => 1
             ]);
 
-        $success['token'] =  auth()->user()->createToken('authToken')-> accessToken;
-        $success['user'] = auth()->user();
-        return response()->json(['message' => 'Logged In!', 'success' => $success],$this-> successStatus);
+        // if(isAdmin == 1)
+        // {
+        //     $token =  auth()->user()->createToken('authToken')-> accessToken;
+        //     return response()->json(['message' => 'Logged In!', 'token' => $token],$this-> successStatus);
 
+        // }
+        // else if(isAdmin == 0)
+        // {
+        //     $token = auth()->user()->createToken('authToken')-> accessToken;
+        //     $course = DB::table('admin_details')->distinct()->select('course_name')->get();
+        //     return response()->json(['message' => 'Logged In!','token' => $token,'course' => $course],$this-> successStatus);
+        // }
+       
+        $success = auth()->user();
+        $token = auth()->user()->createToken('authToken')-> accessToken;
+        
+        
+        return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token],$this-> successStatus);
+
+        
+    }
+
+
+/**
+     * fetch course api
+     *  @return \Illuminate\Http\Response 
+     */
+    public function fetch_course()
+    {
+        $course = DB::table('admin_details')->distinct()->select('course_code','course_name')->get();
+        return response()->json(['course' => $course,'status' => $this-> successStatus],$this-> successStatus);
         
     }
 
@@ -72,28 +101,91 @@ public $successStatus = 200;
         
      }
 /** 
-     * Register api 
+     * Student Register api 
      * 
      * @return \Illuminate\Http\Response 
      */ 
-    public function register(Request $request) 
+    public function student_register(Request $request) 
     { 
         $validatedData = $request->validate([
             'name' => 'required', 
             'email' => 'required|email|unique:users', 
-            'isAdmin' => 'required',
+            // 'isAdmin' => 'required',
             'username' => 'required',
+            'course' => 'required',
+            'semester' => 'required',
             'password' => 'required|confirmed',
             // 'isLogin' => 'required'
         ]);
+
         
         $validatedData['password'] = bcrypt($request->password);
 
-        $user = User::create($validatedData);
+        $user_info = [
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'isAdmin' => 0,
+            'username' => $validatedData['username'],
+            'password' => $validatedData['password'],
+        ];
+
+        $user = User::create($user_info);
+        
+        $student_info = [
+            'student_id' => $user['id'],
+            'name' => $validatedData['name'],
+            'course' => $validatedData['course'],
+            'semester' => $validatedData['semester'],
+        ];
+
+        $student = student_detail::create($student_info);
 
         $success['token'] =  $user->createToken('authToken')-> accessToken;
         $success['user'] = $user;
-        return response()->json(['message' => 'Registered Successfully', 'success' => $success],$this-> successStatus);
+        return response()->json(['message' => 'Registered Successfully', 'status' => $this-> successStatus],$this-> successStatus);
+        } 
+
+
+        /** 
+     * admin Register api 
+     * 
+     * @return \Illuminate\Http\Response 
+     */ 
+    public function admin_register(Request $request) 
+    { 
+        $validatedData = $request->validate([
+            'course_name' => 'required', 
+            'email' => 'required|email|unique:users', 
+            'username' => 'required',
+            'name' => 'required',
+            'password' => 'required|confirmed',
+        ]);
+
+        
+        $validatedData['password'] = bcrypt($request->password);
+
+        $user_info = [
+            'name' => $validatedData['name'],
+            'email' => $validatedData['email'],
+            'isAdmin' => 1,
+            'username' => $validatedData['username'],
+            'password' => $validatedData['password'],
+        ];
+
+        $user = User::create($user_info);
+        
+        $admin_info = [
+            'admin_id' => $user['id'],
+            'course_code' => $validatedData['username'],
+            'course_name' => $validatedData['course_name'],
+            'instructor_name' => $validatedData['name'],
+        ];
+
+        $admin = admin_detail::create($admin_info);
+
+        $success['token'] =  $user->createToken('authToken')-> accessToken;
+        // $success['user'] = $user;
+        return response()->json(['message' => 'Registered Successfully', 'status' => $this-> successStatus],$this-> successStatus);
         } 
 
 /** 

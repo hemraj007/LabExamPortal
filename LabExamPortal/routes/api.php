@@ -19,13 +19,15 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::post('login', 'API\UserController@login');
-Route::post('register', 'API\UserController@register');
+Route::post('student_register', 'API\UserController@student_register');
+Route::post('admin_register', 'API\UserController@admin_register');
 Route::post('/password/email', 'API\ForgotPasswordController@sendResetLinkEmail');
 Route::post('/password/reset', 'API\ResetPasswordController@reset');
 
 
 
 Route::group(['middleware' => 'auth:api'], function(){
+Route::get('fetch_course','API\UserController@fetch_course');
 Route::post('logout','API\UserController@logout');
 Route::get('details', 'API\UserController@details');
 

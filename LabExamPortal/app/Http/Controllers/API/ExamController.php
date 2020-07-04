@@ -62,17 +62,35 @@ class ExamController extends Controller
         //retrieve exam details
         $exam_details = DB::table('exam_details')
             ->select('exam_id','exam_name','exam_hours','exam_for')
-            ->where([['exam_code',$pin],['exam_for'],$admin_id]);
+            ->where([['exam_code',$pin],['exam_for',$admin_id]]);
 
         if(is_null($exam_details))
         {
-            return response()->json(['message'=>'Exam does not exist!!'],404);
+            return response()->json(['message'=>'Invalid Exam Code!!'],400);
         }
 
         $exam_id = $exam_details->exam_id;
 
-        $question_detail = DB::table('questions')->where('exam_id',$exam_id)->get();
+        $question_detail = DB::table('questions')
+            ->select('id','title','description','marks')
+            ->where('exam_id',$exam_id);
+
+        if(is_null($question_detail))
+        {
+            return response()->json(['message'=>'questions not found!!'],404);
+        }
+
+        return response()->json(['question_details' => $question_detail,'time' => $exam_details['exam_hours'],'subject' => $validatedData['course_name']]);
 
      }
+
+     /**
+     * submitSolution api
+     * @return \Illuminate\Http\Response 
+     */
+    public function submitSolution(Request $request)
+    {
+        
+    }
 
 }

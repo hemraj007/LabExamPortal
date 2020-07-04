@@ -10,7 +10,12 @@ class student_detail extends Model
     //
     protected $table = 'student_details';
 
-    protected $fillable = [ 
-        'student_id','name', 'course',
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'student_id','name', 'course','semester',
     ];
 }
