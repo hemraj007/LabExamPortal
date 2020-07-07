@@ -22,7 +22,7 @@ public $successStatus = 200;
     public function login(Request $request){ 
 
         $loginData = $request->validate([
-            'email' => 'email|required',
+            'username' => 'required',
             'password' => 'required',
             'isAdmin' => 'required'
         ]);
@@ -33,7 +33,7 @@ public $successStatus = 200;
  
         //update status to login
         DB::table('users')
-            ->where('email',$loginData['email'])
+            ->where('username',$loginData['username'])
             ->update([
                 'isLogin' => 1
             ]);
