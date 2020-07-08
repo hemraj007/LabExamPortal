@@ -38,23 +38,11 @@ public $successStatus = 200;
                 'isLogin' => 1
             ]);
 
-        // if(isAdmin == 1)
-        // {
-        //     $token =  auth()->user()->createToken('authToken')-> accessToken;
-        //     return response()->json(['message' => 'Logged In!', 'token' => $token],$this-> successStatus);
-
-        // }
-        // else if(isAdmin == 0)
-        // {
-        //     $token = auth()->user()->createToken('authToken')-> accessToken;
-        //     $course = DB::table('admin_details')->distinct()->select('course_name')->get();
-        //     return response()->json(['message' => 'Logged In!','token' => $token,'course' => $course],$this-> successStatus);
-        // }
-       
+      
         $success = auth()->user();
-        $token = auth()->user()->createToken('authToken')-> accessToken;
+        $token = auth()->user()->createToken('authToken',['test'=>'test'])-> accessToken;
         
-        
+                
         return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token],$this-> successStatus);
 
         
@@ -111,7 +99,7 @@ public $successStatus = 200;
             'name' => 'required', 
             'email' => 'required|email|unique:users', 
             // 'isAdmin' => 'required',
-            'username' => 'required',
+            'username' => 'required|unique:users',
             'course' => 'required',
             'semester' => 'required',
             'password' => 'required|confirmed',
@@ -142,6 +130,7 @@ public $successStatus = 200;
 
         $success['token'] =  $user->createToken('authToken')-> accessToken;
         $success['user'] = $user;
+
         return response()->json(['message' => 'Registered Successfully', 'status' => $this-> successStatus],$this-> successStatus);
         } 
 
@@ -156,7 +145,7 @@ public $successStatus = 200;
         $validatedData = $request->validate([
             'course_name' => 'required', 
             'email' => 'required|email|unique:users', 
-            'username' => 'required',
+            'username' => 'required|unique:users',
             'name' => 'required',
             'password' => 'required|confirmed',
         ]);
