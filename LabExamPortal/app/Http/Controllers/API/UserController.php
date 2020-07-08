@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\User; 
 use App\student_detail;
 use App\admin_detail;
+use App\opted_exam;
 use Illuminate\Support\Facades\Auth; 
+
 use Validator;
 
 class UserController extends Controller 
@@ -22,7 +24,7 @@ public $successStatus = 200;
     public function login(Request $request){ 
 
         $loginData = $request->validate([
-            'email' => 'email|required',
+            'username' => 'required',
             'password' => 'required',
             'isAdmin' => 'required'
         ]);
@@ -33,7 +35,7 @@ public $successStatus = 200;
  
         //update status to login
         DB::table('users')
-            ->where('email',$loginData['email'])
+            ->where('username',$loginData['username'])
             ->update([
                 'isLogin' => 1
             ]);
@@ -51,11 +53,12 @@ public $successStatus = 200;
         //     return response()->json(['message' => 'Logged In!','token' => $token,'course' => $course],$this-> successStatus);
         // }
        
-        $success = auth()->user();
+        // $success = auth()->user();
         $token = auth()->user()->createToken('authToken')-> accessToken;
         
         
-        return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token],$this-> successStatus);
+        
+        return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token, 'isAdmin' => $loginData['isAdmin']],$this-> successStatus);
 
         
     }
@@ -111,7 +114,7 @@ public $successStatus = 200;
             'name' => 'required', 
             'email' => 'required|email|unique:users', 
             // 'isAdmin' => 'required',
-            'username' => 'required',
+            'username' => 'required|unique:users',
             'course' => 'required',
             'semester' => 'required',
             'password' => 'required|confirmed',
@@ -156,7 +159,7 @@ public $successStatus = 200;
         $validatedData = $request->validate([
             'course_name' => 'required', 
             'email' => 'required|email|unique:users', 
-            'username' => 'required',
+            'username' => 'required|unique:users',
             'name' => 'required',
             'password' => 'required|confirmed',
         ]);

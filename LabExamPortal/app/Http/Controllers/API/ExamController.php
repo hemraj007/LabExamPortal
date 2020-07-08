@@ -24,16 +24,16 @@ class ExamController extends Controller
      * 
      * @return \Illuminate\Http\Response 
      */ 
-    public function coursefetch()
-    {
-        $course = DB::table('admin_details')->distinct()->select('course_name')->get();
+    // public function coursefetch()
+    // {
+    //     $course = DB::table('admin_details')->distinct()->select('course_name')->get();
 
-        if(is_null($course))
-        {
-            return response()->json(['message' => 'record not found'],404);
-        }
-        return response()->json($course,200);
-    }
+    //     if(is_null($course))
+    //     {
+    //         return response()->json(['message' => 'record not found'],404);
+    //     }
+    //     return response()->json($course,200);
+    // }
 
     /**
      * startExam api
@@ -47,12 +47,18 @@ class ExamController extends Controller
             'exam_code' => 'required',
         ]);
 
+        $course = $validatedData['course_name'];
         $pin = $validatedData['exam_code'];
 
+        
         //retrieve admin_id
         $admin_id = DB::table('admin_details')
             ->select('admin_id')
-            ->where('course_name',$validatedData['course_name']);
+            ->where('course_name',$course)
+            ->first(); // to fetch first row of view
+        
+        
+        // return response()->json(['admin' => $admin_id->admin_id]);
 
         if(is_null($admin_id))
         {
@@ -60,27 +66,44 @@ class ExamController extends Controller
         }
         
         //retrieve exam details
-        $exam_details = DB::table('exam_details')
-            ->select('exam_id','exam_name','exam_hours','exam_for')
-            ->where([['exam_code',$pin],['exam_for',$admin_id]]);
+        $exam_detail = DB::table('exam_details')
+            ->select('exam_id','exam_name','exam_hours')
+            ->where([['exam_code',$pin],['exam_for',$admin_id->admin_id]])
+            ->first();
+            // 
 
-        if(is_null($exam_details))
+        if(is_null($exam_detail))
         {
             return response()->json(['message'=>'Invalid Exam Code!!'],400);
         }
 
-        $exam_id = $exam_details->exam_id;
+        //update opted_exams table
+ 
+        $accessToken = Auth::user()->token();
+        $student_id = $accessToken->User_id;
+        $duration = ($exam_detail->exam_hours)*60*60;//in seconds
 
+        $student_info = [
+            'student_id' => $student_id,
+            'exam_id' => $exam_detail->exam_id, 
+            'duration_left' => $duration
+        ];
+
+        $student = opted_exam::create($student_info);
+
+        // return response()->json($exam_detail);
+        
         $question_detail = DB::table('questions')
             ->select('id','title','description','marks')
-            ->where('exam_id',$exam_id);
+            ->where('exam_id',$exam_detail->exam_id)
+            ->get();
 
         if(is_null($question_detail))
         {
             return response()->json(['message'=>'questions not found!!'],404);
         }
 
-        return response()->json(['question_details' => $question_detail,'time' => $exam_details['exam_hours'],'subject' => $validatedData['course_name']]);
+        return response()->json(['question_details' => $question_detail,'exam_details' => $exam_detail,'subject' => $validatedData['course_name']]);
 
      }
 
