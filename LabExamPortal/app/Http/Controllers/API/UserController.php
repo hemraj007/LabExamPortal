@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\User; 
 use App\student_detail;
 use App\admin_detail;
+use App\opted_exam;
 use Illuminate\Support\Facades\Auth; 
+
 use Validator;
 
 class UserController extends Controller 
@@ -38,12 +40,34 @@ public $successStatus = 200;
                 'isLogin' => 1
             ]);
 
+
       
-        $success = auth()->user();
-        $token = auth()->user()->createToken('authToken',['test'=>'test'])-> accessToken;
+//         $success = auth()->user();
+//         $token = auth()->user()->createToken('authToken',['test'=>'test'])-> accessToken;
         
                 
-        return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token],$this-> successStatus);
+//         return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token],$this-> successStatus);
+
+        // if(isAdmin == 1)
+        // {
+        //     $token =  auth()->user()->createToken('authToken')-> accessToken;
+        //     return response()->json(['message' => 'Logged In!', 'token' => $token],$this-> successStatus);
+
+        // }
+        // else if(isAdmin == 0)
+        // {
+        //     $token = auth()->user()->createToken('authToken')-> accessToken;
+        //     $course = DB::table('admin_details')->distinct()->select('course_name')->get();
+        //     return response()->json(['message' => 'Logged In!','token' => $token,'course' => $course],$this-> successStatus);
+        // }
+       
+        // $success = auth()->user();
+        $token = auth()->user()->createToken('authToken')-> accessToken;
+        
+        
+        
+        return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token, 'isAdmin' => $loginData['isAdmin']],$this-> successStatus);
+
 
         
     }
