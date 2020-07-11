@@ -210,5 +210,37 @@ class ExamController extends Controller
 
         return response()->json(['message' => 'source_code saved Successfully','status' => 200]);
     }
+    
+    /**
+     * update duration api
+     * @return \Illuminate\Http\Response 
+     */
+    
+     public function update_duration(Request $request)
+    {
+        $validatedData = $request->validate([
+            'exam_id' => 'required',
+            'duration_left' => 'required',
+        ]);
+
+        $accessToken = json_decode(Auth::user()->token());
+        $student_id = $accessToken->user_id;
+
+        if (DB::table('opted_exams')->where([['student_id',$student_id],['exam_id',$validatedData['exam_id']]])->exists())
+        {
+            $result = DB::table('opted_exams')
+                    ->where([['student_id',$student_id],['exam_id',$validatedData['exam_id']]])
+                    ->update([
+                        'duration_left' => $validatedData['duration_left'],
+                        ]);
+
+            return response()->json(["message" => "records updated successfully"], 200);
+        }
+        else 
+        {
+            return response()->json(["message" => "record not found"], 404);
+        }
+
+    }
 
 }
