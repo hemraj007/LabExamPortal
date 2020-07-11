@@ -40,6 +40,14 @@ public $successStatus = 200;
                 'isLogin' => 1
             ]);
 
+
+      
+//         $success = auth()->user();
+//         $token = auth()->user()->createToken('authToken',['test'=>'test'])-> accessToken;
+        
+                
+//         return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token],$this-> successStatus);
+
         // if(isAdmin == 1)
         // {
         //     $token =  auth()->user()->createToken('authToken')-> accessToken;
@@ -59,6 +67,7 @@ public $successStatus = 200;
         
         
         return response()->json(['message' => 'Logged In!', 'status' => $this-> successStatus,'token' => $token, 'isAdmin' => $loginData['isAdmin']],$this-> successStatus);
+
 
         
     }
@@ -145,6 +154,7 @@ public $successStatus = 200;
 
         $success['token'] =  $user->createToken('authToken')-> accessToken;
         $success['user'] = $user;
+
         return response()->json(['message' => 'Registered Successfully', 'status' => $this-> successStatus],$this-> successStatus);
         } 
 

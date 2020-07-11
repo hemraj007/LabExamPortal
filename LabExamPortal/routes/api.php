@@ -27,6 +27,7 @@ Route::post('/password/reset', 'API\ResetPasswordController@reset');
 
 
 Route::group(['middleware' => 'auth:api'], function(){
+
 Route::get('fetch_course','API\UserController@fetch_course');
 Route::get('startExam','API\ExamController@startExam');
 Route::get('fetch_source_code','API\ExamController@fetch_source_code');
