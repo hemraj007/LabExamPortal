@@ -170,7 +170,7 @@ class ExamController extends Controller
         $student_id = $accessToken->user_id;
 
         $source = DB::table('student_submissions')
-                    ->select('source_code')
+                    ->select('source_code','lang')
                     ->where([['student_id',$student_id],['qid',$question_id]])
                     ->first();
 
@@ -179,7 +179,7 @@ class ExamController extends Controller
             return response()->json(['message'=>'Record not found!!'],404);
         }
 
-        return response()->json(['source_code'=>$source->source_code]);
+        return response()->json(['source_code'=>$source->source_code,'lang' => $source->lang]);
      }
 
      /**
@@ -188,27 +188,85 @@ class ExamController extends Controller
      */
     public function save_source(Request $request)
     {
+
+       
         $validatedData = $request->validate([
             'question_id' => 'required',
             'source_code' => 'required',
+            'lang' => 'required',
         ]);
 
         $accessToken = json_decode(Auth::user()->token());
         $student_id = $accessToken->user_id;
 
-        $result = DB::table('student_submissions')
-                    ->where([['student_id',$student_id],['qid',$validatedData['question_id']]])
+        if (DB::table('student_submissions')->where([['student_id',$student_id],['qid',$validatedData['question_id']]])->exists())
+        {
+            // $result = DB::table('student_submissions')
+            //         ->where([['student_id',$student_id],['qid',$qid]])
+            //         ->update([
+            //             'source_code' => $validatedData['source_code'],
+            //             'lang' => $validatedData['lang'],
+            //             'is_attempted' => 1,
+            //             ]);
+            student_submission::where([['student_id',$student_id],['qid',$validatedData['question_id']]])
                     ->update([
                         'source_code' => $validatedData['source_code'],
+                        'lang' => $validatedData['lang'],
                         'is_attempted' => 1,
                         ]);
 
-        if(!$result)
+            return response()->json(["message" => "record updated successfully"], 200);
+        }
+        else 
         {
-            return response()->json(['message' => 'source_code not saved !' ]);
+            return response()->json(["message" => "record not found"], 404);
+        }
+        
+
+        // if(!$result)
+        // {
+        //     return response()->json(['message' => 'source_code not saved !' ]);
+        // }
+
+        // return response()->json(['success' => $result]);
+    }
+
+    /**
+     * update duration api
+     * @return \Illuminate\Http\Response 
+     */
+
+    public function update_duration(Request $request)
+    {
+        $validatedData = $request->validate([
+            'exam_id' => 'required',
+            'duration_left' => 'required',
+        ]);
+
+        $accessToken = json_decode(Auth::user()->token());
+        $student_id = $accessToken->user_id;
+
+        if (DB::table('opted_exams')->where([['student_id',$student_id],['exam_id',$validatedData['exam_id']]])->exists())
+        {
+            
+            // $result = DB::table('opted_exams')
+            //         ->select('opted_exams.*')
+            //         ->where([['student_id',$student_id],['exam_id',$validatedData['exam_id']]])
+            //         ->update([
+            //             'duration_left' => $validatedData['duration_left'],
+            //             ]);
+            opted_exam::where([['student_id',$student_id],['exam_id',$validatedData['exam_id']]])->update([
+                'duration_left' => $validatedData['duration_left']
+            ]);
+            
+
+            return response()->json(["message" => "record updated successfully"], 200);
+        }
+        else 
+        {
+            return response()->json(["message" => "record not found"], 404);
         }
 
-        return response()->json(['message' => 'source_code saved Successfully','status' => 200]);
     }
 
 }

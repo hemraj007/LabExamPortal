@@ -19,6 +19,7 @@ class CreateStudentSubmissionsTable extends Migration
             $table->integer('qid')->unsigned();
             $table->boolean('is_attempted')->default(0);
             $table->text('source_code')->nullable();
+            $table->string('lang')->nullable();
             $table->text('input')->nullable();
             $table->text('output')->nullable();
             $table->integer('marks')->nullable();
