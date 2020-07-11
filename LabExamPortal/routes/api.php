@@ -35,5 +35,12 @@ Route::put('save_source','API\ExamController@save_source');
 Route::put('update_duration','API\ExamController@update_duration');
 Route::post('logout','API\UserController@logout');
 Route::get('details', 'API\UserController@details');
+Route::get('number_of_online_users', 'API\AdminController@number_of_online_users');
+Route::get('list_online_users', 'API\AdminController@list_online_users');
+Route::post('create_exam', 'API\AdminController@create_exam');
+Route::get('list_exam', 'API\AdminController@list_exam');
+Route::post('add_question', 'API\AdminController@add_question');
+Route::get('view_question', 'API\AdminController@view_question');
+Route::post('update_instructor', 'API\AdminController@update_instructor');
 
 });
