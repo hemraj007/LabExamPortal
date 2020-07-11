@@ -270,6 +270,6 @@ class ExamController extends Controller
     }
     
     
-    }
+    
 
 }
