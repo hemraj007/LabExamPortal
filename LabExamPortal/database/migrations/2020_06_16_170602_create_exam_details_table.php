@@ -19,6 +19,8 @@ class CreateExamDetailsTable extends Migration
             $table->integer('exam_hours');
             $table->integer('exam_for')->unsigned();
             $table->integer('exam_code');
+            $table->date('exam_date');
+            $table->time('exam_time');
             $table->timestamps();
             $table->foreign('exam_for')->references('admin_id')->on('admin_details');
         });

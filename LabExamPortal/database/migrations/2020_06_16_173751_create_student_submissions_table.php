@@ -18,10 +18,11 @@ class CreateStudentSubmissionsTable extends Migration
             $table->integer('exam_id')->unsigned();
             $table->integer('qid')->unsigned();
             $table->boolean('is_attempted')->default(0);
-            $table->text('source_code');
-            $table->text('output');
-            $table->integer('marks');
-            $table->time('submission_time');
+            $table->text('source_code')->nullable();
+            $table->text('input')->nullable();
+            $table->text('output')->nullable();
+            $table->integer('marks')->nullable();
+            $table->time('submission_time')->nullable();
             $table->integer('no_of_submissions');
             $table->timestamps();
             $table->primary(['student_id','exam_id','qid']);
