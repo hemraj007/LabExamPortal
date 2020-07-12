@@ -33,6 +33,7 @@ Route::get('startExam','API\ExamController@startExam');
 Route::get('fetch_source_code','API\ExamController@fetch_source_code');
 Route::put('save_source','API\ExamController@save_source');
 Route::put('update_duration','API\ExamController@update_duration');
+Route::post('run','API\ExamController@run');
 Route::post('logout','API\UserController@logout');
 Route::get('details', 'API\UserController@details');
 Route::get('number_of_online_users', 'API\AdminController@number_of_online_users');
