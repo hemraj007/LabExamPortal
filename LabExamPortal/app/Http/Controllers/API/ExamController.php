@@ -15,6 +15,7 @@ use App\student_detail;
 use App\exam_detail;
 use App\student_submission;
 use GuzzleHttp\Client;
+use Carbon\Carbon;
 
 class ExamController extends Controller
 {
@@ -332,6 +333,81 @@ class ExamController extends Controller
 
         return response()->json(['hackerearth'=>$decode_result,'status'=>$status]);
     }
+
+
+     /**
+     * final submission api
+     * @return \Illuminate\Http\Response 
+     */
+    
+    public function final_submission(Request $request)
+    {
+        $validatedData = $request->validate([
+            'question_id' => 'required',
+            'source_code' => 'required',
+            'lang' => 'required',
+            'input' => '',
+        ]);
+
+        $accessToken = json_decode(Auth::user()->token());
+        $student_id = $accessToken->user_id;
+
+       
+        $body['form_params'] = [
+            // 'client_id'=> 'e90140d8ed8d190ee44a33f321175c4d60433f9249c8.api.hackerearth.com',
+            'client_secret' => 'f8b71acad22e556b1ff5ebc842260584263ea6e8',
+            'async' => 0,
+            'source' => $validatedData['source_code'],
+            'input' => $request->input,
+            'lang' => $validatedData['lang'],
+            'time_limit' => 5,
+            'memory_limit' => 262144,
+        ];
+
+       
+        $client = new Client();
+        $result = $client->request('POST','https://api.hackerearth.com/v3/code/run/',$body);
+        $decode_result = json_decode($result->getBody());
+
+        //check for error
+        if($decode_result->compile_status == "OK")
+        {
+            $output = $decode_result->run_status->output;
+        }
+        else
+        {
+            $output = $decode_result->compile_status;
+        }
+
+         
+        $current_date_time = Carbon::now()->toDateTimeString();
+
+        //update in database
+        if (DB::table('student_submissions')->where([['student_id',$student_id],['qid',$validatedData['question_id']]])->exists())
+        {
+            
+            student_submission::where([['student_id',$student_id],['qid',$validatedData['question_id']]])
+                    ->update([
+                        'source_code' => $validatedData['source_code'],
+                        'input' => $validatedData['input'],
+                        'lang' => $validatedData['lang'],
+                        // 'output' => $decode_result->run_status->output,
+                        'output' => $output,
+                        'is_attempted' => 1,
+                        'submission_time' => $current_date_time,
+                        'no_of_submissions' => DB::raw('no_of_submissions+1')
+                        ]);
+            $status = ['message' => 'Successfully submitted !','status'=>200];
+        }
+        else
+        {
+            $status = ['message' => 'Record not found','status'=>400];
+        }
+        
+
+        return response()->json(['hackerearth'=>$decode_result,'status'=>$status]);
+    }
+
     
 
 }

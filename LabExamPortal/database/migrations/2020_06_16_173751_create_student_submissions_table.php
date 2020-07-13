@@ -23,7 +23,7 @@ class CreateStudentSubmissionsTable extends Migration
             $table->text('input')->nullable();
             $table->text('output')->nullable();
             $table->integer('marks')->nullable();
-            $table->time('submission_time')->nullable();
+            $table->timestamp('submission_time')->nullable();
             $table->integer('no_of_submissions');
             $table->timestamps();
             $table->primary(['student_id','exam_id','qid']);
