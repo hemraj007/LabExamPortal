@@ -14,12 +14,40 @@ use Illuminate\Support\Facades\DB;
 class AdminController extends Controller
 {
     //
+    /**
+     * admin data api
+     * @return \Illuminate\Http\Response 
+     */
+    public function admin_data()
+    {
+        $accessToken = Auth::user()->token();
+        $admin_id = json_decode($accessToken)->user_id;
+
+        $result = DB::table('admin_details')
+                    ->select('instructor_name','course_code','course_name')
+                    ->where('admin_id',$admin_id)
+                    ->first();
+
+        if(is_null($result))
+        {
+            return response()->json(['message'=>'Record notfound'],404);
+        }
+
+        return response()->json(['admin_data'=>$result],200);
+    }
+
+    /**
+     * number_of_online_users api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function number_of_online_users()
     {
         $isUser = "";
         $accessToken = Auth::user()->token();
         $remoteUser = json_decode($accessToken);
         $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+
         if(!$isUser->isAdmin)
         {
             return response()->json(["message" => "access denied"],403);
@@ -32,6 +60,12 @@ class AdminController extends Controller
         }
         return response()->json($users,200);
     }
+
+    /**
+     * list_online_users api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function list_online_users()
     {
        // $userIsAdmin = "";
@@ -55,6 +89,12 @@ class AdminController extends Controller
           }
         return response()->json($listname,200);
     }
+
+    /**
+     * create_exam api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function create_exam(Request $request)
     {
         $isUser = "";
@@ -62,6 +102,7 @@ class AdminController extends Controller
         $accessToken = Auth::user()->token();
         $remoteUser = json_decode($accessToken);
         $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+
         if(!$isUser->isAdmin)
         {
             return response()->json(["message" => "access denied"],403);
@@ -73,23 +114,31 @@ class AdminController extends Controller
         //$exam_sub = DB::table('admin_details')->select('course_code')->where('admin_id',$remoteUser->user_id)->get()[0];
         $validatedData = $request->validate([
             'exam_name' => 'required', 
-            'exam_duration' => 'required', 
+            'exam_hours' => 'required', 
             'exam_date' => 'required',
-            'scheduled_at' => 'required',
+            'exam_time' => 'required',
             
         ]);
         $exam_info = [
                  'exam_name' => $validatedData['exam_name'],
-                 'exam_duration' => $validatedData['exam_duration'],
-                 'exam_date' => $validatedData['exam_date'],
-                 'scheduled_at' => $validatedData['scheduled_at'],
-                 'exam_for' => $remoteUser->user_id, //$exam_sub->course_code,
+                 'exam_hours' => $validatedData['exam_hours'],
+                 'exam_for' => $remoteUser->user_id,
                  'exam_code' => $exam_unique_code,
+                 'exam_date' => $validatedData['exam_date'],
+                 'exam_time' => $validatedData['exam_time'],
+                  //$exam_sub->course_code,
+                 
                 ];
         $exam = exam_detail::create($exam_info);
         
-        return response()->json($exam_unique_code,201);
+        return response()->json(['exam_code'=>$exam_unique_code,'message'=>'created Successfully'],201);
     }
+
+    /**
+     * list_exam api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function list_exam()
     {
         $isUser = "";
@@ -111,6 +160,12 @@ class AdminController extends Controller
         
         
     }
+
+    /**
+     * add_question api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function add_question(Request $request)
     {
         $isUser = "";
@@ -141,6 +196,12 @@ class AdminController extends Controller
    
    return response()->json(['message' => 'Successfully added'],200);
     }
+
+    /**
+     * view_question api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function view_question()
     {
         $accessToken = Auth::user()->token();
@@ -153,6 +214,13 @@ class AdminController extends Controller
         $question_info = DB::table('questions')->select('title','description','marks')->where('admin_id',$remoteUser->user_id)->get();
         return response()->json($question_info,200);
     }
+
+
+    /**
+     * update_instructor api
+     * @return \Illuminate\Http\Response 
+     */
+
     public function update_instructor(Request $request)
     {
         $isUser = "";
@@ -160,17 +228,21 @@ class AdminController extends Controller
         $accessToken = Auth::user()->token();
         $remoteUser = json_decode($accessToken);
         $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+
         if(!$isUser->isAdmin)
         {
             return response()->json(["message" => "access denied"],403);
         }
+
         $affectInstructorName = DB::table('admin_details')
               ->where('admin_id',$remoteUser->user_id)
               ->update(['instructor_name' => $request->instructor_name]);
+
         $affectEmail = DB::table('users')
               ->where('id',$remoteUser->user_id)
               ->update(['email' => $request->email]);
-         $affectUserName = DB::table('users')
+
+        $affectUserName = DB::table('users')
               ->where('id',$remoteUser->user_id)
               ->update(['name' => $request->instructor_name]);
           
