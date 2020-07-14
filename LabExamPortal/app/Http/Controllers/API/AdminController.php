@@ -152,7 +152,7 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
         // $name = DB::table('users')->select('username')->where('id',$remoteUser->user_id)->get()[0];
-         $exams = DB::table('exam_details')->select('exam_id','exam_name','exam_date','exam_hours')->where('exam_for',$remoteUser->user_id)->latest()->get();//get();
+         $exams = DB::table('exam_details')->select('exam_id','exam_name','exam_date','exam_hours','exam_code')->where('exam_for',$remoteUser->user_id)->latest()->get();//get();
          if(is_null($exams))
            {
                 return response()->json(["message" => "record not found"],404);
