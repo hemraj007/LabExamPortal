@@ -38,7 +38,7 @@ Route::post('final_submission','API\ExamController@final_submission');
 Route::post('logout','API\UserController@logout');
 Route::get('details', 'API\UserController@details');
 Route::get('admin_data','API\AdminController@admin_data');
-Route::get('nextExam','API\AdminController@nextExam');
+Route::get('next_exam','API\AdminController@nextExam');
 Route::get('number_of_online_users', 'API\AdminController@number_of_online_users');
 Route::get('list_online_users', 'API\AdminController@list_online_users');
 Route::post('create_exam', 'API\AdminController@create_exam');
