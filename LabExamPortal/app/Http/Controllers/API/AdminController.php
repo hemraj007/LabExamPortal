@@ -220,6 +220,7 @@ class AdminController extends Controller
     /**
      * update_instructor api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function update_instructor(Request $request)
@@ -235,27 +236,16 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
 
-        $affectInstructorName = DB::table('admin_details')
-              ->where('admin_id',$remoteUser->user_id)
-              ->update(['instructor_name' => $request->instructor_name]);
+        $validatedData = $request->validate([
+            'instructor_name' => 'required', 
+            'email' => 'required|email|unique:users',    
+        ]);
+        
+        $affectedRows = admin_detail::where('admin_id', '=',$remoteUser->user_id )->update(array('instructor_name' => $validatedData['instructor_name']));
 
-        $affectEmail = DB::table('users')
-              ->where('id',$remoteUser->user_id)
-              ->update(['email' => $request->email]);
+        $affectedRows = user::where('id', '=',$remoteUser->user_id )->update(array('name' =>  $validatedData['instructor_name'] ,'email' => $validatedData['email']));
 
-        $affectUserName = DB::table('users')
-              ->where('id',$remoteUser->user_id)
-              ->update(['name' => $request->instructor_name]);
-          
-
-             
-        /*$code = DB::table('admin_details')->select('course_code')->where('admin_id',$remoteUser->user_id)->get()[0];
-        $course = admin_detail::find($code->course_code);
-        if(is_null($course))
-           {
-                return response()->json(["message" => "record not found"],404);  
-           }
-        $course->update($request->all());*/
+       
         return response()->json(['message' => 'Successfully updated'],200);
 
     }
@@ -289,5 +279,34 @@ class AdminController extends Controller
 
         return response()->json(['nextExam'=>$exams],200);
 
+    }
+    
+    /**
+     * edit question api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function edit_question(Request $request)
+    {
+        $isUser = "";
+        // $code = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+        $validatedData = $request->validate([
+            'id' => 'required',
+            'title' => 'required', 
+            'description' => 'required',
+            'marks' => 'required',    
+        ]);
+        $affectedRows = question::where('id', '=',$validatedData['id'] )->update(array('title' => $validatedData['title'] ,'description' => $validatedData['description'],'marks'  => $validatedData['marks']));
+
+        return response()->json(['message' => 'Successfully edited'],200);
+    
     }
 }
