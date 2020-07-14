@@ -10,6 +10,7 @@ use App\exam_detail;
 use App\question; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -256,6 +257,37 @@ class AdminController extends Controller
            }
         $course->update($request->all());*/
         return response()->json(['message' => 'Successfully updated'],200);
+
+    }
+    
+    /**
+     * next exam api
+     * @return \Illuminate\Http\Response 
+     */
+
+    public function nextExam()
+    {
+        $isUser = "";
+       // $exams = "";
+        // $code = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+
+        $dt = Carbon::now()->toDateString();
+        $exams = DB::table('exam_details')->select('exam_date','exam_time')->where('exam_date', '>', $dt)->orderBy('exam_date')->first();
+
+        if(is_null($exams))
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+
+        return response()->json(['nextExam'=>$exams],200);
 
     }
 }
