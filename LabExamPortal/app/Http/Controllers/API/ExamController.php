@@ -111,7 +111,7 @@ class ExamController extends Controller
         //update opted_exams table
  
         
-        $duration = ($exam_detail->exam_hours)*60*60;//in seconds
+        $duration = ($exam_detail->exam_hours)*60;//minutes to seconds
 
         $student_info = [
             'student_id' => $student_id,
