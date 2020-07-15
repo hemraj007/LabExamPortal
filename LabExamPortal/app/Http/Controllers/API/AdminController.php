@@ -187,7 +187,7 @@ class AdminController extends Controller
         
         $exam = exam_detail::create($exam_info);
         
-        return response()->json(['exam_code'=>$exam_unique_code,'message'=>'created Successfully'],201);
+        return response()->json(['exam_code'=>$exam_unique_code,'message'=>'Created Successfully'],201);
     }
 
     /**
