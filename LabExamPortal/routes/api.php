@@ -39,7 +39,10 @@ Route::post('logout','API\UserController@logout');
 Route::get('details', 'API\UserController@details');
 Route::get('admin_data','API\AdminController@admin_data');
 Route::get('next_exam','API\AdminController@nextExam');
+<<<<<<< HEAD
 Route::put('update_marks','API\AdminController@update_marks');
+=======
+>>>>>>> 205fe17539e8787a3ef2c577dbe275748adbe79a
 Route::get('number_of_online_users', 'API\AdminController@number_of_online_users');
 Route::get('list_online_users', 'API\AdminController@list_online_users');
 Route::post('create_exam', 'API\AdminController@create_exam');

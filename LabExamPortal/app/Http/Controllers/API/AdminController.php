@@ -115,7 +115,7 @@ class AdminController extends Controller
     {
        // $userIsAdmin = "";
         $isUser = "";
-        //$listname = "";
+        $listname = "";
         $accessToken = Auth::user()->token();
         $remoteUser = json_decode($accessToken);
         $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
@@ -339,7 +339,6 @@ class AdminController extends Controller
         return response()->json(['nextExam'=>$exams],200);
 
     }
-
     /**
      * edit question api
      * @return \Illuminate\Http\Response 
