@@ -346,7 +346,7 @@ class AdminController extends Controller
         }
 
         $dt = Carbon::now()->toDateString();
-        $exams = DB::table('exam_details')->select('exam_date','exam_time')->where('exam_date', '>', $dt)->orderBy('exam_date')->orderBy('exam_time')->first();
+        $exams = DB::table('exam_details')->select('exam_date','exam_time')->where('exam_date', '>=', $dt)->orderBy('exam_date')->orderBy('exam_time')->first();
 
         if(is_null($exams))
         {
