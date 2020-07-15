@@ -8,8 +8,10 @@ use App\User;
 use App\admin_detail;
 use App\exam_detail;
 use App\question; 
+use App\student_submission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -17,6 +19,7 @@ class AdminController extends Controller
     /**
      * admin data api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
     public function admin_data()
     {
@@ -36,9 +39,50 @@ class AdminController extends Controller
         return response()->json(['admin_data'=>$result],200);
     }
 
+
+    /**
+     * update marks api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+    public function update_marks(Request $request)
+    {
+        $isUser = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+
+        $validatedData = $request->validate([
+            'student_id' => 'required',
+            'question_id' => 'required',
+            'marks' => 'required',
+        ]);
+
+        if(DB::table('student_submissions')->where([['student_id',$validatedData['student_id']],['qid',$validatedData['question_id']]])->exists())
+        {
+            $result = student_submission::where([['student_id',$validatedData['student_id']],['qid',$validatedData['question_id']]])
+            ->update([
+                'marks' => $validatedData['marks'],
+            ]);
+
+            return response()->json(['message'=>'marks updated successfully'],200);
+        }
+        else
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+       
+    }
+
     /**
      * number_of_online_users api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function number_of_online_users()
@@ -64,6 +108,7 @@ class AdminController extends Controller
     /**
      * list_online_users api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function list_online_users()
@@ -83,16 +128,17 @@ class AdminController extends Controller
         {
             return response()->json(["message" => "record not found"],404);
         }
-        foreach ($users as $value) {
-            //echo "$value <br>";
-            $listname[] = $value->name;
-          }
-        return response()->json($listname,200);
+        // foreach ($users as $value) {
+        //     //echo "$value <br>";
+        //     $listname[] = $value->name;
+        //   }
+        return response()->json($users,200);
     }
 
     /**
      * create_exam api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function create_exam(Request $request)
@@ -137,6 +183,7 @@ class AdminController extends Controller
     /**
      * list_exam api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function list_exam()
@@ -151,7 +198,7 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
         // $name = DB::table('users')->select('username')->where('id',$remoteUser->user_id)->get()[0];
-         $exams = DB::table('exam_details')->select('exam_id','exam_name','exam_date','exam_duration')->where('exam_for',$remoteUser->user_id)->latest()->get();//get();
+         $exams = DB::table('exam_details')->select('exam_id','exam_name','exam_date','exam_time','exam_hours','exam_code')->where('exam_for',$remoteUser->user_id)->latest()->get();//get();
          if(is_null($exams))
            {
                 return response()->json(["message" => "record not found"],404);
@@ -164,6 +211,7 @@ class AdminController extends Controller
     /**
      * add_question api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function add_question(Request $request)
@@ -178,23 +226,34 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
         $validatedData = $request->validate([
+            'exam_id' => 'required',
             'title' => 'required', 
             'description' => 'required', 
             'marks' => 'required',
             
         ]);
-        $examfor = DB::table('exam_details')->select('exam_id')->where('exam_for',$remoteUser->user_id)->get()[0];
-        $question_info = [
-            'title' => $validatedData['title'],
-            'description' => $validatedData['description'],
-            'marks' => $validatedData['marks'],
-            'admin_id' =>$remoteUser->user_id,
-            'exam_id' => $examfor->exam_id,
-            
-           ];
-   $ques = question::create($question_info);
+         if(DB::table('exam_details')->where('exam_id',$validatedData['exam_id'])->exists())
+        {
+            $question_info = [
+                'title' => $validatedData['title'],
+                'description' => $validatedData['description'],
+                'marks' => $validatedData['marks'],
+                'admin_id' =>$remoteUser->user_id,
+                'exam_id' => $validatedData['exam_id'],
+                
+               ];
+
+            $ques = question::create($question_info);
+
+            return response()->json(['message' => 'question Successfully added'],200);
+        }
+        else 
+        {
+            return response()->json(['message'=>'Exam id does not exists'],404);
+        }
+       
    
-   return response()->json(['message' => 'Successfully added'],200);
+   
     }
 
     /**
@@ -211,7 +270,7 @@ class AdminController extends Controller
         {
             return response()->json(["message" => "access denied"],403);
         }
-        $question_info = DB::table('questions')->select('title','description','marks')->where('admin_id',$remoteUser->user_id)->get();
+        $question_info = DB::table('questions')->select('id','title','marks')->where([['admin_id',$remoteUser->user_id],['exam_id',]])->get();
         return response()->json($question_info,200);
     }
 
@@ -219,6 +278,7 @@ class AdminController extends Controller
     /**
      * update_instructor api
      * @return \Illuminate\Http\Response 
+     * status : up-to-date
      */
 
     public function update_instructor(Request $request)
@@ -234,28 +294,88 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
 
-        $affectInstructorName = DB::table('admin_details')
-              ->where('admin_id',$remoteUser->user_id)
-              ->update(['instructor_name' => $request->instructor_name]);
+        $validatedData = $request->validate([
+            'instructor_name' => 'required', 
+            'email' => 'required|email|unique:users',    
+        ]);
+        
+        $affectedRows = admin_detail::where('admin_id', '=',$remoteUser->user_id )->update(array('instructor_name' => $validatedData['instructor_name']));
 
-        $affectEmail = DB::table('users')
-              ->where('id',$remoteUser->user_id)
-              ->update(['email' => $request->email]);
+        $affectedRows = user::where('id', '=',$remoteUser->user_id )->update(array('name' =>  $validatedData['instructor_name'] ,'email' => $validatedData['email']));
 
-        $affectUserName = DB::table('users')
-              ->where('id',$remoteUser->user_id)
-              ->update(['name' => $request->instructor_name]);
-          
-
-             
-        /*$code = DB::table('admin_details')->select('course_code')->where('admin_id',$remoteUser->user_id)->get()[0];
-        $course = admin_detail::find($code->course_code);
-        if(is_null($course))
-           {
-                return response()->json(["message" => "record not found"],404);  
-           }
-        $course->update($request->all());*/
+       
         return response()->json(['message' => 'Successfully updated'],200);
 
+    }
+
+    /**
+     * next exam api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function nextExam()
+    {
+        $isUser = "";
+       // $exams = "";
+        // $code = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+
+        $dt = Carbon::now()->toDateString();
+        $exams = DB::table('exam_details')->select('exam_date','exam_time')->where('exam_date', '>', $dt)->orderBy('exam_date')->orderBy('exam_time')->first();
+
+        if(is_null($exams))
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+
+        return response()->json(['nextExam'=>$exams],200);
+
+    }
+
+    /**
+     * edit question api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function edit_question(Request $request)
+    {
+        $isUser = "";
+        // $code = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+        $validatedData = $request->validate([
+            'id' => 'required',
+            'title' => 'required', 
+            'description' => 'required',
+            'marks' => 'required',    
+        ]);
+
+        if(DB::table('questions')->where('id', '=',$validatedData['id'] )->exists())
+        {
+            
+            $affectedRows = question::where('id', '=',$validatedData['id'] )->update(array('title' => $validatedData['title'] ,'description' => $validatedData['description'],'marks'  => $validatedData['marks']));
+
+            return response()->json(['message' => 'Question Successfully edited'],200);
+        }
+        else
+        {
+            return response()->json(['message'=>'Question not Found'],404);
+        }
+        
+    
     }
 }
