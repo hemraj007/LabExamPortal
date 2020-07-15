@@ -25,6 +25,7 @@ class CreateStudentSubmissionsTable extends Migration
             $table->integer('marks')->nullable();
             $table->timestamp('submission_time')->nullable();
             $table->integer('no_of_submissions');
+            $table->boolean('is_evaluated')->default(0);
             $table->timestamps();
             $table->primary(['student_id','exam_id','qid']);
             $table->foreign('student_id')->references('id')->on('users');

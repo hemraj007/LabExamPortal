@@ -68,6 +68,7 @@ class AdminController extends Controller
             $result = student_submission::where([['student_id',$validatedData['student_id']],['qid',$validatedData['question_id']]])
             ->update([
                 'marks' => $validatedData['marks'],
+                'is_evaluated'=>1,
             ]);
 
             return response()->json(['message'=>'marks updated successfully'],200);
@@ -563,5 +564,78 @@ class AdminController extends Controller
         }
         
     }
+
+    /**
+     * view_submission api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function view_submission(Request $request)
+    {
+        $isUser = "";
+        // $code = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+
+        $validatedData = $request->validate([
+            'exam_id'=>'required',
+        ]);
+       
+       if(DB::table('student_submissions')->where('exam_id',$validatedData['exam_id'])->exists())
+       {
+        $student_info = DB::table('student_submissions')->select('student_id')->distinct()->where('exam_id',$validatedData['exam_id'])->get();
+
+        foreach($student_info as $value)
+        {
+            $list[] = $value->student_id;
+        }
+        
+        $submission_info = DB::table('users')->select('id as student_id','username','name')->whereIn('id',$list)->get();
+
+        $total_marks = DB::table('student_submissions')
+                        ->select('student_id', DB::raw('SUM(marks) as total'),DB::raw('SUM(is_evaluated) as eval'))
+                        ->groupBy('student_id')
+                        ->where('exam_id',$validatedData['exam_id'])
+                        ->get();
+
+        
+        foreach($submission_info as $user )
+        {
+            foreach($total_marks as $total)
+            {
+                if($user->student_id == $total->student_id)
+                {
+                    //to check if already evaluated
+                    if($total->total == 0 && $total->eval == 0)
+                        $marks = null;
+                    else    
+                        $marks = $total->total;
+
+                    $result[] = [
+                        'student_id' => $user->student_id,
+                        'username' => $user->username,
+                        'name'=>$user->name,
+                        'total_marks'=>$marks,
+                    ];
+                }
+            
+            } 
+        }
+        
+        return response()->json($result,200);
+       }
+        else
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+        
+    }
+
 
 }
