@@ -96,6 +96,7 @@ class ExamController extends Controller
             $exam_data = DB::table('questions')
                             ->join('student_submissions','questions.id','=','student_submissions.qid')
                             ->select('questions.id','questions.title','questions.description','questions.marks','student_submissions.is_attempted','student_submissions.no_of_submissions','student_submissions.created_at','student_submissions.updated_at')
+                            ->where([['student_submissions.student_id',$student_id],['questions.exam_id',$exam_detail->exam_id],['questions.admin_id',$admin_id->admin_id]])
                             ->get();
             
             $duration = DB::table('opted_exams')
@@ -125,7 +126,7 @@ class ExamController extends Controller
         
         $question_detail = DB::table('questions')
             ->select('id')
-            ->where('exam_id',$exam_detail->exam_id)
+            ->where([['exam_id',$exam_detail->exam_id],['admin_id',$admin_id->admin_id]])
             ->get();
 
         if(is_null($question_detail))
@@ -149,6 +150,7 @@ class ExamController extends Controller
         $exam_data = DB::table('questions')
                             ->join('student_submissions','questions.id','=','student_submissions.qid')
                             ->select('questions.id','questions.title','questions.description','questions.marks','student_submissions.is_attempted','student_submissions.no_of_submissions','student_submissions.created_at','student_submissions.updated_at')
+                            ->where([['student_submissions.student_id',$student_id],['questions.exam_id',$exam_detail->exam_id],['questions.admin_id',$admin_id->admin_id]])
                             ->get();
         
         return response()->json(['question_details' => $exam_data,'exam_details' => $exam_detail,'student_name'=>$student_details->name,'username'=>$student_details->username,'client_ip'=>$ip,'course_code' => $course,'course' => $admin_id->course_name,'duration_left' => $student->duration_left]);

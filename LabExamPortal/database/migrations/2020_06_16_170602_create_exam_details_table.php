@@ -18,7 +18,7 @@ class CreateExamDetailsTable extends Migration
             $table->string('exam_name');
             $table->integer('exam_hours');
             $table->integer('exam_for')->unsigned();
-            $table->integer('exam_code');
+            $table->integer('exam_code')->unique();
             $table->date('exam_date');
             $table->time('exam_time');
             $table->timestamps();
