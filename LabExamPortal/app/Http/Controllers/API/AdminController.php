@@ -259,10 +259,13 @@ class AdminController extends Controller
     /**
      * view_question api
      * @return \Illuminate\Http\Response 
+     * status : not tested
      */
 
-    public function view_question()
+    public function view_question(Request $request)
     {
+        $isUser = "";
+        $id = "";
         $accessToken = Auth::user()->token();
         $remoteUser = json_decode($accessToken);
         $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
@@ -270,8 +273,21 @@ class AdminController extends Controller
         {
             return response()->json(["message" => "access denied"],403);
         }
-        $question_info = DB::table('questions')->select('id','title','marks')->where([['admin_id',$remoteUser->user_id],['exam_id',]])->get();
-        return response()->json($question_info,200);
+
+        $validatedData = $request->validate([
+            'exam_id' => 'required',
+        ]);
+        
+       /* $id = DB::table('questions')->select('id')->where('exam_id',$request->exam_id)->get()[0];
+        $question_info = question::find($id);
+        
+        return response()->json($question_info,200);*/
+        $question_info = DB::table('questions')->select('id','title','marks')->where([['admin_id','=',$remoteUser->user_id],['exam_id','=',$validatedData['exam_id']],])->get();
+        if(is_null($question_info))
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+        return response()->json(['questions' => $question_info],200);
     }
 
 
@@ -377,4 +393,175 @@ class AdminController extends Controller
         
     
     }
+
+    /**
+     * check_student_submission api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function check_student_submission(Request $request)
+    {
+        $isUser = "";
+        // $code = "";
+        $accessToken = Auth::user()->token(); 
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+        $validatedData = $request->validate([
+            'student_id' => 'required',
+            'exam_id' => 'required',
+               
+        ]);
+        // ->join('users','users.id','=','student_submissions.student_id')
+        if(DB::table('questions')->join('student_submissions','questions.id','=','student_submissions.qid')
+                                ->where([['student_submissions.student_id',$validatedData['student_id']],['student_submissions.exam_id',$validatedData['exam_id']]])
+                                ->exists())
+        {
+            $submission_info = DB::table('questions')
+                        ->join('student_submissions','questions.id','=','student_submissions.qid')
+                        ->select('questions.id','questions.title','student_submissions.marks')
+                        ->where([['student_submissions.student_id',$validatedData['student_id']],['student_submissions.exam_id',$validatedData['exam_id']]])
+                        ->get();
+
+            return response()->json(['submission' => $submission_info],200);
+        }
+        else
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+        
+    
+    }
+
+    /**
+     * check_question api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function check_Question(Request $request)
+    {
+        $isUser = "";
+        // $code = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+        $validatedData = $request->validate([
+            'qid' => 'required',
+            'student_id' => 'required',
+               
+        ]);
+
+        if(DB::table('questions')->join('student_submissions','questions.id','=','student_submissions.qid')
+                                ->where([['student_submissions.qid','=',$validatedData['qid']],['student_submissions.student_id','=',$validatedData['student_id']],])
+                                ->exists())
+        {
+            $submission_info = DB::table('questions')
+                        ->join('student_submissions','questions.id','=','student_submissions.qid')
+                        ->select('questions.id','questions.title','student_submissions.source_code','student_submissions.lang','student_submissions.input','student_submissions.output','questions.marks')
+                        ->where([['student_submissions.qid','=',$validatedData['qid']],['student_submissions.student_id','=',$validatedData['student_id']],])
+                        ->get();
+
+            return response()->json(['submission' => $submission_info],200);
+        }
+        else
+        {
+            return response()->json(["message" => "record not found"],404);
+        }
+        
+    
+    }
+
+
+    /**
+     * delete question api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function deleteQuestion(Request $request)
+     {
+         $isUser = "";
+         $examId = "";
+        // $checkExam ="";
+         $accessToken = Auth::user()->token();
+         $remoteUser = json_decode($accessToken);
+         $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+         if(!$isUser->isAdmin)
+         {
+             return response()->json(["message" => "access denied"],403);
+         }
+         $validatedData = $request->validate([
+            'qid' => 'required',           
+        ]);
+
+        if(DB::table('questions')->where('id', $validatedData['qid'])->exists())
+        {
+            $examId = DB::table('questions')->select('exam_id')->where('id', $validatedData['qid'])->first();
+         
+         if(DB::table('student_submissions')->where('exam_id',$examId->exam_id)->exists()) 
+         {
+             return response()->json(["message" => "can't delete question"],403);
+         }
+         DB::table('questions')->where('id', '=', $validatedData['qid'])->delete();
+        // DB::table('student_submissions')->where('qid', '=', $request->id)->delete();
+         return response()->json(null,204);
+        }
+        else
+        {
+            return response()->json(['message'=> 'Question not found'],404);
+        }
+         
+     }
+
+     /**
+     * delete exam api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+
+    public function deleteExam(Request $request)
+    {
+        $isUser = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+        //check
+        $validatedData = $request->validate([
+           'exam_id' => 'required',           
+       ]);
+
+        
+        if(DB::table('exam_details')->where('exam_id', '=', $validatedData['exam_id'])->exists())
+        {
+            if(DB::table('student_submissions')->where('exam_id', '=', $validatedData['exam_id'])->exists())
+            {
+                return response()->json(["message" => "can't delete exam"],403);
+            }
+            DB::table('questions')->where('exam_id', '=', $validatedData['exam_id'] )->delete();
+            DB::table('exam_details')->where('exam_id', '=', $validatedData['exam_id'] )->delete();
+            
+          //  DB::table('student_submissions')->where('exam_id ', '=', $request->exam_id)->delete();
+          //  DB::table('opted_exams')->where('exam_id ', '=', $request->exam_id)->delete();
+            return response()->json(null,204);
+        }
+        else
+        {
+            return response()->json(['message'=>'Exam does not exist'],404);
+        }
+        
+    }
+
 }
