@@ -53,5 +53,6 @@ Route::get('check_question','API\AdminController@check_Question');
 Route::delete('delete_question','API\AdminController@deleteQuestion');
 Route::delete('delete_exam','API\AdminController@deleteExam');
 Route::get('view_submission','API\AdminController@view_submission');
+Route::get('fetch_question_by_id','API\AdminController@fetch_question_by_id');
 
 });

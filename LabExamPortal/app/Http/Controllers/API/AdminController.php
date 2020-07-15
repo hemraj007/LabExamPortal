@@ -33,7 +33,7 @@ class AdminController extends Controller
 
         if(is_null($result))
         {
-            return response()->json(['message'=>'Record notfound'],404);
+            return response()->json(['message'=>'Record not found'],404);
         }
 
         return response()->json(['admin_data'=>$result],200);
@@ -71,11 +71,11 @@ class AdminController extends Controller
                 'is_evaluated'=>1,
             ]);
 
-            return response()->json(['message'=>'marks updated successfully'],200);
+            return response()->json(['message'=>'Marks Updated Successfully'],200);
         }
         else
         {
-            return response()->json(["message" => "record not found"],404);
+            return response()->json(["message" => "Record Not Found"],404);
         }
        
     }
@@ -292,13 +292,54 @@ class AdminController extends Controller
         $question_info = question::find($id);
         
         return response()->json($question_info,200);*/
-        $question_info = DB::table('questions')->select('id','title','marks')->where([['admin_id','=',$remoteUser->user_id],['exam_id','=',$validatedData['exam_id']],])->get();
-        if(is_null($question_info))
+        if(DB::table('questions')->where([['admin_id',$remoteUser->user_id],['exam_id',$validatedData['exam_id']]])->exists())
         {
-            return response()->json(["message" => "record not found"],404);
+            $question_info = DB::table('questions')->select('id','title','description','marks')->where([['admin_id',$remoteUser->user_id],['exam_id',$validatedData['exam_id']]])->get();
+            return response()->json(['questions' => $question_info],200);
         }
-        return response()->json(['questions' => $question_info],200);
+        
+        else
+        {
+            return response()->json(["message" => "Record Not Found"],404);
+        }
+        
     }
+
+    /**
+     * fetch question by id api
+     * @return \Illuminate\Http\Response 
+     * status : up-to-date
+     */
+    public function fetch_question_by_id(Request $request)
+    {
+        $isUser = "";
+        $id = "";
+        $accessToken = Auth::user()->token();
+        $remoteUser = json_decode($accessToken);
+        $isUser = DB::table('users')->select('isAdmin')->where('id',$remoteUser->user_id)->get()[0];
+        if(!$isUser->isAdmin)
+        {
+            return response()->json(["message" => "access denied"],403);
+        }
+
+        $validatedData = $request->validate([
+            'question_id' => 'required',
+        ]);
+
+        if(DB::table('questions')->where([['admin_id',$remoteUser->user_id],['id',$validatedData['question_id']]])->exists())
+        {
+            $question_info = DB::table('questions')->select('id','title','description','marks')->where([['admin_id',$remoteUser->user_id],['id',$validatedData['question_id']]])->first();
+            return response()->json(['questions' => $question_info],200);
+        }
+        
+        else
+        {
+            return response()->json(["message" => "Record Not Found"],404);
+        }
+
+
+    }
+
 
 
     /**
@@ -383,18 +424,18 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
         $validatedData = $request->validate([
-            'id' => 'required',
+            'question_id' => 'required',
             'title' => 'required', 
             'description' => 'required',
             'marks' => 'required',    
         ]);
 
-        if(DB::table('questions')->where('id', '=',$validatedData['id'] )->exists())
+        if(DB::table('questions')->where('id', '=',$validatedData['question_id'] )->exists())
         {
             
-            $affectedRows = question::where('id', '=',$validatedData['id'] )->update(array('title' => $validatedData['title'] ,'description' => $validatedData['description'],'marks'  => $validatedData['marks']));
+            $affectedRows = question::where('id', '=',$validatedData['question_id'] )->update(array('title' => $validatedData['title'] ,'description' => $validatedData['description'],'marks'  => $validatedData['marks']));
 
-            return response()->json(['message' => 'Question Successfully edited'],200);
+            return response()->json(['message' => 'Question Successfully Edited'],200);
         }
         else
         {
@@ -441,7 +482,7 @@ class AdminController extends Controller
         }
         else
         {
-            return response()->json(["message" => "record not found"],404);
+            return response()->json(["message" => "Record Not Found"],404);
         }
         
     
@@ -465,26 +506,26 @@ class AdminController extends Controller
             return response()->json(["message" => "access denied"],403);
         }
         $validatedData = $request->validate([
-            'qid' => 'required',
+            'question_id' => 'required',
             'student_id' => 'required',
                
         ]);
 
         if(DB::table('questions')->join('student_submissions','questions.id','=','student_submissions.qid')
-                                ->where([['student_submissions.qid','=',$validatedData['qid']],['student_submissions.student_id','=',$validatedData['student_id']],])
+                                ->where([['student_submissions.qid','=',$validatedData['question_id']],['student_submissions.student_id','=',$validatedData['student_id']],])
                                 ->exists())
         {
             $submission_info = DB::table('questions')
                         ->join('student_submissions','questions.id','=','student_submissions.qid')
                         ->select('questions.id','questions.title','student_submissions.source_code','student_submissions.lang','student_submissions.input','student_submissions.output','questions.marks')
-                        ->where([['student_submissions.qid','=',$validatedData['qid']],['student_submissions.student_id','=',$validatedData['student_id']],])
+                        ->where([['student_submissions.qid','=',$validatedData['question_id']],['student_submissions.student_id','=',$validatedData['student_id']],])
                         ->get();
 
             return response()->json(['submission' => $submission_info],200);
         }
         else
         {
-            return response()->json(["message" => "record not found"],404);
+            return response()->json(["message" => "Record Not Found"],404);
         }
         
     
