@@ -154,7 +154,7 @@ class AdminController extends Controller
         {
             return response()->json(["message" => "access denied"],403);
         }
-        $exam_unique_code = rand(1000,9999);
+        
        // $accessToken = Auth::user()->token();
         //$remoteUser = json_decode($accessToken);
         
@@ -166,6 +166,14 @@ class AdminController extends Controller
             'exam_time' => 'required',
             
         ]);
+        $exam_unique_code = rand(1000,9999);
+        // $exam_unique_code = 1234; to test
+
+        while(DB::table('exam_details')->where('exam_code',$exam_unique_code)->exists())
+        {
+            $exam_unique_code = rand(1000,9999);
+        }
+        
         $exam_info = [
                  'exam_name' => $validatedData['exam_name'],
                  'exam_hours' => $validatedData['exam_hours'],
@@ -176,6 +184,7 @@ class AdminController extends Controller
                   //$exam_sub->course_code,
                  
                 ];
+        
         $exam = exam_detail::create($exam_info);
         
         return response()->json(['exam_code'=>$exam_unique_code,'message'=>'created Successfully'],201);
